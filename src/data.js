@@ -1,5 +1,20 @@
-export const today = new Date().toISOString().slice(0, 10)
-const days = (date) => Math.ceil((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000)
+// 到期计算统一使用“本地日历日期”口径：今天取设备本地日期，
+// 证件日期（YYYY-MM-DD）按同一口径拆解；两者都折算到 UTC 午夜求天数差，
+// 不受本地时区偏移与夏令时影响，跨年、闰年同样是整数天。
+// 只在计算时读取日期，不修改任何已保存数据的原始日期值。
+const pad2 = (n) => String(n).padStart(2, '0')
+const toDateString = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+// 每次调用实时取本地日期，避免模块加载后跨天长期不刷新
+export const localToday = () => toDateString(new Date())
+const dayStart = (date) => {
+  const [y, m, d] = date.split('-').map(Number)
+  return Date.UTC(y, m - 1, d)
+}
+// 剩余天数：到期日相对今天（本地日历日）的整数天差；0 = 今天到期，负数 = 已过期；未填日期返回 null
+const days = (date, from = localToday()) => {
+  if (!date) return null
+  return Math.round((dayStart(date) - dayStart(from)) / 86400000)
+}
 export const config = {
   storageKey: 'family-document-keeper-v1',
   brand: '家档管家', subtitle: 'Family Archive', icon: 'FolderLock', entityLabel: '证件档案', secondaryLabel: '家庭保险', historyLabel: '使用记录', heroTitle: '让重要文件，始终井然有序。', heroCopy: '证件、保单和家庭文件，都有清晰的去处与提醒。', createLabel: '新建档案',

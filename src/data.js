@@ -1,13 +1,15 @@
-export const today = new Date().toISOString().slice(0, 10)
-const days = (date) => Math.ceil((new Date(`${date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000)
+import { daysUntil } from './utils/date'
+
+// 到期天数统一以“本地日历日”口径计算（详见 src/utils/date.js）
+const days = daysUntil
 export const config = {
   storageKey: 'family-document-keeper-v1',
   brand: '家档管家', subtitle: 'Family Archive', icon: 'FolderLock', entityLabel: '证件档案', secondaryLabel: '家庭保险', historyLabel: '使用记录', heroTitle: '让重要文件，始终井然有序。', heroCopy: '证件、保单和家庭文件，都有清晰的去处与提醒。', createLabel: '新建档案',
   nav: [{ id: 'overview', label: '总览' }, { id: 'documents', label: '证件档案' }, { id: 'history', label: '使用记录' }, { id: 'insurance', label: '家庭保险' }, { id: 'achievements', label: '成就与榜单' }],
   metrics: [
     { label: '证件总数', collection: 'documents', tone: 'green' },
-    { label: '90天内到期', tone: 'peach', value: (s) => s.documents.filter((x) => x.expires && days(x.expires) >= 0 && days(x.expires) <= 90).length },
-    { label: '已过期', tone: 'red', value: (s) => s.documents.filter((x) => x.expires && days(x.expires) < 0).length },
+    { label: '90天内到期', tone: 'peach', value: (s) => s.documents.filter((x) => { const d = days(x.expires); return d !== null && d >= 0 && d <= 90 }).length },
+    { label: '已过期', tone: 'red', value: (s) => s.documents.filter((x) => { const d = days(x.expires); return d !== null && d < 0 }).length },
     { label: '外借未还', tone: 'blue', value: (s) => s.usages.filter((x) => x.status === '借用中').length },
   ],
   form: { title: '新建证件档案', collection: 'documents', fields: [
